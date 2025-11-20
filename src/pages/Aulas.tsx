@@ -54,6 +54,8 @@ interface Professor {
   sobrenome: string;
   disciplinas: string[];
   ativo: boolean;
+  celular: string;
+  email: string;
 }
 
 interface Aluno {
@@ -61,6 +63,7 @@ interface Aluno {
   nome: string;
   sobrenome: string;
   ativo: boolean;
+  email: string;
 }
 
 const Aulas = () => {
@@ -168,6 +171,50 @@ const Aulas = () => {
     return true;
   };
 
+  const sendNotifications = async (aula: any, action: 'criacao' | 'alteracao' | 'cancelamento') => {
+    try {
+      const professor = professores.find(p => p.id === aula.professor_id);
+      const aluno1 = alunos.find(a => a.id === aula.aluno1_id);
+      const aluno2 = aula.aluno2_id ? alunos.find(a => a.id === aula.aluno2_id) : null;
+
+      const message = `
+🎓 Aula ${action === 'criacao' ? 'Agendada' : action === 'alteracao' ? 'Alterada' : 'Cancelada'}
+
+📚 Disciplina: ${aula.disciplina}
+👨‍🏫 Professor: ${professor?.nome} ${professor?.sobrenome}
+👨‍🎓 Aluno(s): ${aluno1?.nome} ${aluno1?.sobrenome}${aluno2 ? `, ${aluno2.nome} ${aluno2.sobrenome}` : ''}
+📅 Data: ${new Date(aula.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+⏰ Horário: ${aula.horario}
+${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
+      `.trim();
+
+      // Enviar WhatsApp
+      await supabase.functions.invoke('send-whatsapp-notification', {
+        body: { to: professor?.celular, message, type: action }
+      });
+
+      // Sincronizar Google Calendar
+      const startDateTime = `${aula.data}T${aula.horario}:00`;
+      const endTime = new Date(`${aula.data}T${aula.horario}`);
+      endTime.setHours(endTime.getHours() + 1);
+      const endDateTime = endTime.toISOString().slice(0, 16);
+
+      await supabase.functions.invoke('sync-google-calendar', {
+        body: {
+          summary: `${aula.disciplina} - ${professor?.nome}`,
+          description: message,
+          startDateTime,
+          endDateTime,
+          attendees: [professor?.email || '', aluno1?.email || ''],
+          action: action === 'criacao' ? 'create' : action === 'alteracao' ? 'update' : 'delete',
+          eventId: aula.id
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao enviar notificações:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -213,11 +260,13 @@ const Aulas = () => {
           .eq('id', editingAula.id);
 
         if (error) throw error;
+        await sendNotifications({ ...dataToSave, id: editingAula.id }, 'alteracao');
         toast.success('Aula atualizada com sucesso');
       } else {
-        const { error } = await supabase.from('aulas').insert([dataToSave]);
+        const { data: newAula, error } = await supabase.from('aulas').insert([dataToSave]).select().single();
 
         if (error) throw error;
+        await sendNotifications(newAula, 'criacao');
         toast.success('Aula agendada com sucesso');
       }
 
@@ -250,12 +299,16 @@ const Aulas = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Deseja realmente excluir esta aula?')) return;
 
+    const aula = aulas.find(a => a.id === id);
     const { error } = await supabase.from('aulas').delete().eq('id', id);
 
     if (error) {
       toast.error('Erro ao excluir aula');
       console.error(error);
     } else {
+      if (aula) {
+        await sendNotifications(aula, 'cancelamento');
+      }
       toast.success('Aula excluída com sucesso');
       fetchAulas();
     }
