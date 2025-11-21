@@ -12,7 +12,50 @@ const Setup = () => {
   const createBaseAdmin = async () => {
     setLoading(true);
     try {
-      // Create auth user - the trigger will automatically create the admin record
+      // First, try to sign in to check if user already exists
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'admin@sistema.com',
+        password: 'Admin@123',
+      });
+
+      if (!signInError) {
+        // User exists and password is correct, just verify admin record exists
+        const { data: session } = await supabase.auth.getSession();
+        
+        if (session.session?.user) {
+          // Check if admin record exists
+          const { data: adminData } = await supabase
+            .from('administradores')
+            .select('id')
+            .eq('email', 'admin@sistema.com')
+            .maybeSingle();
+
+          if (!adminData) {
+            // Create admin record manually (trigger might not have worked)
+            const { error: insertError } = await supabase
+              .from('administradores')
+              .insert({
+                user_id: session.session.user.id,
+                nome: 'Administrador',
+                sobrenome: 'Base',
+                email: 'admin@sistema.com',
+                celular: '(00) 00000-0000',
+                ativo: true,
+                is_base_admin: true
+              });
+
+            if (insertError) throw insertError;
+          }
+        }
+
+        await supabase.auth.signOut();
+        toast.success('Administrador base já existe e está configurado!');
+        toast.info('Use: admin@sistema.com / Admin@123');
+        setTimeout(() => navigate('/login'), 2000);
+        return;
+      }
+
+      // User doesn't exist or wrong password, try to create
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: 'admin@sistema.com',
         password: 'Admin@123',
@@ -25,28 +68,25 @@ const Setup = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // If user already exists but wrong password was tried
+        if (authError.message?.includes('User already registered')) {
+          toast.error('Usuário já existe. Use a senha correta ou entre em contato com o suporte.');
+          return;
+        }
+        throw authError;
+      }
 
       if (authData.user) {
         toast.success('Administrador base criado com sucesso!');
         toast.info('Use: admin@sistema.com / Admin@123');
         
-        // Sign out the newly created user so they can log in properly
         await supabase.auth.signOut();
-        
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
+        setTimeout(() => navigate('/login'), 2000);
       }
     } catch (error: any) {
       console.error('Erro ao criar administrador base:', error);
-      
-      if (error.message?.includes('User already registered')) {
-        toast.error('Usuário já existe. Tente fazer login.');
-        navigate('/login');
-      } else {
-        toast.error(error.message || 'Erro ao criar administrador base');
-      }
+      toast.error(error.message || 'Erro ao criar administrador base');
     } finally {
       setLoading(false);
     }
