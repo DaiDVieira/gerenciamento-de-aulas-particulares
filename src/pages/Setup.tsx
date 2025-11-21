@@ -12,7 +12,7 @@ const Setup = () => {
   const createBaseAdmin = async () => {
     setLoading(true);
     try {
-      // Create auth user
+      // Create auth user - the trigger will automatically create the admin record
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: 'admin@sistema.com',
         password: 'Admin@123',
@@ -28,38 +28,6 @@ const Setup = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Check if admin already exists in administradores table
-        const { data: existingAdmin } = await supabase
-          .from('administradores')
-          .select('id')
-          .eq('email', 'admin@sistema.com')
-          .single();
-
-        if (existingAdmin) {
-          // Update existing admin with correct user_id
-          const { error: updateError } = await supabase
-            .from('administradores')
-            .update({ user_id: authData.user.id })
-            .eq('email', 'admin@sistema.com');
-
-          if (updateError) throw updateError;
-        } else {
-          // Create new admin record
-          const { error: insertError } = await supabase
-            .from('administradores')
-            .insert({
-              user_id: authData.user.id,
-              nome: 'Administrador',
-              sobrenome: 'Base',
-              email: 'admin@sistema.com',
-              celular: '(00) 00000-0000',
-              ativo: true,
-              is_base_admin: true
-            });
-
-          if (insertError) throw insertError;
-        }
-
         toast.success('Administrador base criado com sucesso!');
         toast.info('Use: admin@sistema.com / Admin@123');
         
