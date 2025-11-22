@@ -371,16 +371,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
             </Button>
             <h1 className="text-3xl font-bold text-foreground">Aulas</h1>
           </div>
-          <Button
-            onClick={() => {
-              resetForm();
-              setIsDialogOpen(true);
-            }}
-            className="gap-2"
-          >
-            <Plus size={18} />
-            Agendar Aula
-          </Button>
         </div>
 
         <Card className="p-6">

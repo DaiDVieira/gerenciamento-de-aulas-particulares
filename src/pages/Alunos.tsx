@@ -215,16 +215,6 @@ const Alunos = () => {
             </Button>
             <h1 className="text-3xl font-bold text-foreground">Alunos</h1>
           </div>
-          <Button
-            onClick={() => {
-              resetForm();
-              setIsDialogOpen(true);
-            }}
-            className="gap-2"
-          >
-            <Plus size={18} />
-            Novo Aluno
-          </Button>
         </div>
 
         <Card className="p-6">
