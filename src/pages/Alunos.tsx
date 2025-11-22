@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Search, Edit, UserX } from 'lucide-react';
+import { ConfirmInactivateDialog } from '@/components/dialogs/ConfirmInactivateDialog';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,8 @@ const Alunos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
+  const [inactivateDialogOpen, setInactivateDialogOpen] = useState(false);
+  const [selectedAlunoId, setSelectedAlunoId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -118,13 +121,13 @@ const Alunos = () => {
     setIsDialogOpen(true);
   };
 
-  const handleInactivate = async (id: string) => {
-    if (!confirm('Deseja inativar este aluno?')) return;
+  const handleInactivate = async () => {
+    if (!selectedAlunoId) return;
 
     const { error } = await supabase
       .from('alunos')
       .update({ ativo: false })
-      .eq('id', id);
+      .eq('id', selectedAlunoId);
 
     if (error) {
       toast.error('Erro ao inativar aluno');
@@ -133,6 +136,7 @@ const Alunos = () => {
       toast.success('Aluno inativado com sucesso');
       fetchAlunos();
     }
+    setSelectedAlunoId(null);
   };
 
   const handleActivate = async (id: string) => {
@@ -252,7 +256,10 @@ const Alunos = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleInactivate(aluno.id)}
+                          onClick={() => {
+                            setSelectedAlunoId(aluno.id);
+                            setInactivateDialogOpen(true);
+                          }}
                         >
                           <UserX size={14} />
                         </Button>
@@ -411,6 +418,13 @@ const Alunos = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        <ConfirmInactivateDialog
+          open={inactivateDialogOpen}
+          onOpenChange={setInactivateDialogOpen}
+          onConfirm={handleInactivate}
+          entityName="aluno"
+        />
       </div>
     </div>
   );

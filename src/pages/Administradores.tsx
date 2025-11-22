@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog';
+import { ErrorDialog } from '@/components/dialogs/ErrorDialog';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +42,9 @@ const Administradores = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Administrador | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<Administrador | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -177,18 +182,13 @@ const Administradores = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (admin: Administrador) => {
-    if (admin.is_base_admin) {
-      toast.error('Não é possível excluir o administrador base');
-      return;
-    }
-
-    if (!confirm('Deseja realmente excluir este administrador?')) return;
+  const handleDelete = async () => {
+    if (!selectedAdmin) return;
 
     const { error } = await supabase
       .from('administradores')
       .delete()
-      .eq('id', admin.id);
+      .eq('id', selectedAdmin.id);
 
     if (error) {
       toast.error('Erro ao excluir administrador');
@@ -197,6 +197,16 @@ const Administradores = () => {
       toast.success('Administrador excluído com sucesso');
       fetchAdministradores();
     }
+    setSelectedAdmin(null);
+  };
+
+  const handleDeleteClick = (admin: Administrador) => {
+    if (admin.is_base_admin) {
+      setErrorDialogOpen(true);
+      return;
+    }
+    setSelectedAdmin(admin);
+    setDeleteDialogOpen(true);
   };
 
   const resetForm = () => {
@@ -300,8 +310,7 @@ const Administradores = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(admin)}
-                        disabled={admin.is_base_admin}
+                        onClick={() => handleDeleteClick(admin)}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -409,6 +418,19 @@ const Administradores = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        <ConfirmDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDelete}
+        />
+
+        <ErrorDialog
+          open={errorDialogOpen}
+          onOpenChange={setErrorDialogOpen}
+          title="Exclusão impossível"
+          description="Você tentou excluir o registro do Administrador base. Essa ação não pode ser realizada."
+        />
       </div>
     </div>
   );
