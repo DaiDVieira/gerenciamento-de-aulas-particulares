@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,7 @@ interface Aluno {
 
 const Alunos = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -59,6 +60,16 @@ const Alunos = () => {
   useEffect(() => {
     fetchAlunos();
   }, []);
+
+  useEffect(() => {
+    const action = (location.state as any)?.action;
+    if (action === 'register') {
+      resetForm();
+      setIsDialogOpen(true);
+      // Clear the state to prevent reopening on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchAlunos = async () => {
     const { data, error } = await supabase
