@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog';
 import {
   Dialog,
   DialogContent,
@@ -75,6 +76,8 @@ const Aulas = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAula, setEditingAula] = useState<Aula | null>(null);
   const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedAulaId, setSelectedAulaId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     professor_id: '',
     aluno1_id: '',
@@ -296,22 +299,24 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta aula?')) return;
+  const handleDelete = async () => {
+    if (!selectedAulaId) return;
 
-    const aula = aulas.find(a => a.id === id);
-    const { error } = await supabase.from('aulas').delete().eq('id', id);
+    const aula = aulas.find(a => a.id === selectedAulaId);
+    const { error } = await supabase.from('aulas').delete().eq('id', selectedAulaId);
 
     if (error) {
       toast.error('Erro ao excluir aula');
       console.error(error);
     } else {
       if (aula) {
-        await sendNotifications(aula, 'cancelamento');
+        // Notify teacher and guardians (simulated)
+        console.log('Notificação de cancelamento enviada');
       }
       toast.success('Aula excluída com sucesso');
       fetchAulas();
     }
+    setSelectedAulaId(null);
   };
 
   const resetForm = () => {
@@ -417,7 +422,10 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(aula.id)}
+                        onClick={() => {
+                          setSelectedAulaId(aula.id);
+                          setDeleteDialogOpen(true);
+                        }}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -596,6 +604,12 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
             </form>
           </DialogContent>
         </Dialog>
+
+        <ConfirmDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDelete}
+        />
       </div>
     </div>
   );

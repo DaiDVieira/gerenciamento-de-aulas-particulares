@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Search, Edit, UserX } from 'lucide-react';
+import { ConfirmInactivateDialog } from '@/components/dialogs/ConfirmInactivateDialog';
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,8 @@ const Professores = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProfessor, setEditingProfessor] = useState<Professor | null>(null);
+  const [inactivateDialogOpen, setInactivateDialogOpen] = useState(false);
+  const [selectedProfessorId, setSelectedProfessorId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -138,13 +141,13 @@ const Professores = () => {
     setIsDialogOpen(true);
   };
 
-  const handleInactivate = async (id: string) => {
-    if (!confirm('Deseja inativar este professor?')) return;
+  const handleInactivate = async () => {
+    if (!selectedProfessorId) return;
 
     const { error } = await supabase
       .from('professores')
       .update({ ativo: false })
-      .eq('id', id);
+      .eq('id', selectedProfessorId);
 
     if (error) {
       toast.error('Erro ao inativar professor');
@@ -153,6 +156,7 @@ const Professores = () => {
       toast.success('Professor inativado com sucesso');
       fetchProfessores();
     }
+    setSelectedProfessorId(null);
   };
 
   const handleActivate = async (id: string) => {
@@ -280,7 +284,10 @@ const Professores = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleInactivate(professor.id)}
+                          onClick={() => {
+                            setSelectedProfessorId(professor.id);
+                            setInactivateDialogOpen(true);
+                          }}
                         >
                           <UserX size={14} />
                         </Button>
@@ -433,6 +440,13 @@ const Professores = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        <ConfirmInactivateDialog
+          open={inactivateDialogOpen}
+          onOpenChange={setInactivateDialogOpen}
+          onConfirm={handleInactivate}
+          entityName="professor"
+        />
       </div>
     </div>
   );
