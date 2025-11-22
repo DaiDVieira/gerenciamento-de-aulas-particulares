@@ -46,6 +46,7 @@ const Alunos = () => {
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
   const [inactivateDialogOpen, setInactivateDialogOpen] = useState(false);
   const [selectedAlunoId, setSelectedAlunoId] = useState<string | null>(null);
+  const [action, setAction] = useState<string>('');
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -59,7 +60,11 @@ const Alunos = () => {
 
   useEffect(() => {
     fetchAlunos();
-  }, []);
+    const currentAction = (location.state as any)?.action;
+    if (currentAction) {
+      setAction(currentAction);
+    }
+  }, [location]);
 
   useEffect(() => {
     const action = (location.state as any)?.action;
@@ -178,6 +183,18 @@ const Alunos = () => {
     setEditingAluno(null);
   };
 
+  const handleRowClick = (aluno: Aluno) => {
+    if (action === 'edit') {
+      handleEdit(aluno);
+    } else if (action === 'inactivate') {
+      setSelectedAlunoId(aluno.id);
+      setInactivateDialogOpen(true);
+    } else if (action === 'search') {
+      // Just view, no action
+      return;
+    }
+  };
+
   const filteredAlunos = alunos.filter((aluno) =>
     `${aluno.nome} ${aluno.sobrenome} ${aluno.email}`
       .toLowerCase()
@@ -235,7 +252,11 @@ const Alunos = () => {
             </TableHeader>
             <TableBody>
               {filteredAlunos.map((aluno) => (
-                <TableRow key={aluno.id}>
+                <TableRow 
+                  key={aluno.id}
+                  onClick={() => handleRowClick(aluno)}
+                  className={action && action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
+                >
                   <TableCell className="font-medium">
                     {aluno.nome} {aluno.sobrenome}
                   </TableCell>
