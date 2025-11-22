@@ -9,10 +9,10 @@ const Gerenciamento = () => {
   const { signOut } = useAuth();
 
   const menuOptions = [
-    { title: 'Alunos', path: '/alunos' },
-    { title: 'Aulas', path: '/aulas' },
-    { title: 'Professores', path: '/professores' },
-    { title: 'Administradores', path: '/administradores' },
+    { title: 'Alunos', path: '/options/alunos' },
+    { title: 'Aulas', path: '/options/aulas' },
+    { title: 'Professores', path: '/options/professores' },
+    { title: 'Administradores', path: '/options/administradores' },
     { title: 'Gerar Relatório Financeiro', path: '/relatorios' },
   ];
 
