@@ -104,16 +104,6 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => navigate('/setup')}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Primeiro acesso? Configure o sistema
-            </Button>
-          </div>
         </Card>
       </div>
     </div>

@@ -115,7 +115,10 @@ ALTER TABLE public.aulas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins ativos podem visualizar administradores"
   ON public.administradores FOR SELECT
   TO authenticated
-  USING (public.is_active_admin(auth.uid()));
+  USING (
+  auth.uid() = user_id OR
+  public.is_active_admin(auth.uid())
+);
 
 CREATE POLICY "Admins ativos podem criar administradores"
   ON public.administradores FOR INSERT

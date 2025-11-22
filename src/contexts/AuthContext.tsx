@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: any;
+  session: any;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -23,76 +23,86 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
+  // 🔥 LOGIN PERSONALIZADO
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // ===========================================================
+      // 1) PERMITIR O ADMIN BASE (login local, sem usar Supabase)
+      // ===========================================================
+      if (email === "admin@sistema.com" && password === "Admin@123") {
+        const baseAdmin = {
+          id: "admin-base",
+          email: "admin@sistema.com",
+          is_base: true
+        };
+
+        setUser(baseAdmin);
+        setSession({ user: baseAdmin });
+
+        toast.success("Administrador base autenticado");
+        navigate("/dashboard");
+        return;
+      }
+
+      // ===========================================================
+      // 2) LOGIN DE QUALQUER OUTRO ADMIN (via Supabase Auth)
+      // ===========================================================
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
-      if (error) {
-        throw error;
+      if (authError) {
+        toast.error("Credenciais inválidas");
+        return;
       }
 
-      // Verificar se o administrador está ativo
-      if (data.user) {
-        const { data: adminData, error: adminError } = await supabase
-          .from('administradores')
-          .select('ativo')
-          .eq('user_id', data.user.id)
-          .single();
+      const signedUser = authData.user;
 
-        if (adminError || !adminData || !adminData.ativo) {
-          await supabase.auth.signOut();
-          throw new Error('Administrador inativo ou não encontrado');
-        }
+      // ===========================================================
+      // 3) VALIDAR SE O USUÁRIO É ADMIN NA TABELA administradores
+      // ===========================================================
+      const { data: adminData, error: adminError } = await supabase
+        .from("administradores")
+        .select("*")
+        .eq("user_id", signedUser.id)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (!adminData || adminError) {
+        toast.error("Usuário não é administrador ativo");
+        return;
       }
 
-      toast.success('Login realizado com sucesso');
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Erro no login:', error);
-      toast.error(error.message === 'Invalid login credentials' 
-        ? 'E-mail ou senha incorretos' 
-        : error.message || 'Erro ao fazer login');
-      throw error;
+      // ===========================================================
+      // 4) LOGIN OK
+      // ===========================================================
+      setUser(signedUser);
+      setSession(authData.session);
+
+      toast.success("Login realizado com sucesso");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao tentar login");
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success('Logout realizado com sucesso');
-      navigate('/login');
-    } catch (error: any) {
-      console.error('Erro no logout:', error);
-      toast.error('Erro ao fazer logout');
-    }
+    setUser(null);
+    setSession(null);
+    await supabase.auth.signOut();
+    toast.success("Logout realizado");
+    navigate("/login");
   };
 
   return (
