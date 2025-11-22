@@ -11,6 +11,7 @@ import EntityOptions from "./pages/EntityOptions";
 import Alunos from "./pages/Alunos";
 import Professores from "./pages/Professores";
 import Aulas from "./pages/Aulas";
+import AulasCadastro from "./pages/AulasCadastro";
 import Administradores from "./pages/Administradores";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
@@ -31,7 +32,8 @@ const App = () => (
             <Route path="/options/:entity" element={<ProtectedRoute><EntityOptions /></ProtectedRoute>} />
             <Route path="/alunos" element={<ProtectedRoute><Alunos /></ProtectedRoute>} />
             <Route path="/professores" element={<ProtectedRoute><Professores /></ProtectedRoute>} />
-            <Route path="/aulas" element={<ProtectedRoute><Aulas /></ProtectedRoute>} />
+          <Route path="/aulas" element={<ProtectedRoute><Aulas /></ProtectedRoute>} />
+          <Route path="/aulas/cadastro" element={<ProtectedRoute><AulasCadastro /></ProtectedRoute>} />
             <Route path="/administradores" element={<ProtectedRoute><Administradores /></ProtectedRoute>} />
             <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
