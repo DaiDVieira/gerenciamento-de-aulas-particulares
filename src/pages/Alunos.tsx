@@ -231,7 +231,6 @@ const Alunos = () => {
                 <TableHead>Celular</TableHead>
                 <TableHead>Responsável</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,37 +252,6 @@ const Alunos = () => {
                     >
                       {aluno.ativo ? 'Ativo' : 'Inativo'}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(aluno)}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      {aluno.ativo ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedAlunoId(aluno.id);
-                            setInactivateDialogOpen(true);
-                          }}
-                        >
-                          <UserX size={14} />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleActivate(aluno.id)}
-                        >
-                          Ativar
-                        </Button>
-                      )}
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}

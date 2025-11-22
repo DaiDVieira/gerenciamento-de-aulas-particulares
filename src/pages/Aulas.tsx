@@ -393,7 +393,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                 <TableHead>Professor</TableHead>
                 <TableHead>Alunos</TableHead>
                 <TableHead>Sala</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -413,27 +412,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                     )}
                   </TableCell>
                   <TableCell>{aula.sala || '-'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(aula)}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAulaId(aula.id);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

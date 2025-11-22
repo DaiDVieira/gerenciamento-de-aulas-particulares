@@ -283,7 +283,6 @@ const Administradores = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Celular</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -307,25 +306,6 @@ const Administradores = () => {
                     >
                       {admin.ativo ? 'Ativo' : 'Inativo'}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(admin)}
-                        disabled={admin.is_base_admin}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteClick(admin)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}
