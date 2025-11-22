@@ -344,7 +344,7 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/gerenciamento')}
             >
               <ArrowLeft size={16} />
             </Button>

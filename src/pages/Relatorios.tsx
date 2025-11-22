@@ -52,7 +52,7 @@ const Relatorios = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/gerenciamento')}>
             <ArrowLeft size={16} />
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Relatório Financeiro</h1>

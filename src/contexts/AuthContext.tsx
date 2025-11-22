@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession({ user: baseAdmin });
 
         toast.success("Administrador base autenticado");
-        navigate("/dashboard");
+        navigate("/gerenciamento");
         return;
       }
 
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(authData.session);
 
       toast.success("Login realizado com sucesso");
-      navigate("/dashboard");
+      navigate("/gerenciamento");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao tentar login");

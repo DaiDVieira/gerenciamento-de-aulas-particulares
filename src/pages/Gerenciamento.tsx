@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Dashboard = () => {
+const Gerenciamento = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
@@ -56,23 +56,10 @@ const Dashboard = () => {
               </Button>
             ))}
           </div>
-
-          <div className="mt-6 space-y-2">
-            <h2 className="text-sm font-medium text-muted-foreground">Outras opções</h2>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start text-foreground hover:bg-accent"
-                onClick={() => navigate('/dashboard')}
-              >
-                Voltar ao menu principal
-              </Button>
-            </div>
-          </div>
         </Card>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Gerenciamento;
