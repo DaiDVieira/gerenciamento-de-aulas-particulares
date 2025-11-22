@@ -52,6 +52,8 @@ Deno.serve(async (req) => {
       .from('administradores')
       .insert({
         user_id: authData.user.id,
+        nome: 'Administrador',
+        sobrenome: 'Base',
         email: 'admin@sistema.com',
         celular: '(00) 00000-0000',
         ativo: true,
