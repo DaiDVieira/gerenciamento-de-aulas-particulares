@@ -38,7 +38,6 @@ interface Aula {
   aluno2_id: string | null;
   data: string;
   horario: string;
-  disciplina: string;
   sala: string | null;
   status: string;
   valor_aula: number | null;
@@ -53,7 +52,6 @@ interface Professor {
   id: string;
   nome: string;
   sobrenome: string;
-  disciplinas: string[];
   ativo: boolean;
   celular: string;
   email: string;
@@ -85,7 +83,6 @@ const Aulas = () => {
     aluno2_id: '',
     data: '',
     horario: '',
-    disciplina: '',
     sala: '',
     observacoes: '',
   });
@@ -194,7 +191,6 @@ const Aulas = () => {
       const message = `
 🎓 Aula ${action === 'criacao' ? 'Agendada' : action === 'alteracao' ? 'Alterada' : 'Cancelada'}
 
-📚 Disciplina: ${aula.disciplina}
 👨‍🏫 Professor: ${professor?.nome} ${professor?.sobrenome}
 👨‍🎓 Aluno(s): ${aluno1?.nome} ${aluno1?.sobrenome}${aluno2 ? `, ${aluno2.nome} ${aluno2.sobrenome}` : ''}
 📅 Data: ${new Date(aula.data + 'T00:00:00').toLocaleDateString('pt-BR')}
@@ -215,7 +211,7 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
 
       await supabase.functions.invoke('sync-google-calendar', {
         body: {
-          summary: `${aula.disciplina} - ${professor?.nome}`,
+          summary: `Aula - ${professor?.nome}`,
           description: message,
           startDateTime,
           endDateTime,
@@ -303,7 +299,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
       aluno2_id: aula.aluno2_id || '',
       data: aula.data,
       horario: aula.horario,
-      disciplina: aula.disciplina,
       sala: aula.sala || '',
       observacoes: aula.observacoes || '',
     });
@@ -337,7 +332,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
       aluno2_id: '',
       data: '',
       horario: '',
-      disciplina: '',
       sala: '',
       observacoes: '',
     });
@@ -348,7 +342,7 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
   const filteredAulas = aulas.filter((aula) => {
     const professorNome = `${aula.professores.nome} ${aula.professores.sobrenome}`;
     const aluno1Nome = `${aula.alunos_aulas_aluno1_idToalunos.nome} ${aula.alunos_aulas_aluno1_idToalunos.sobrenome}`;
-    const searchString = `${professorNome} ${aluno1Nome} ${aula.disciplina}`.toLowerCase();
+    const searchString = `${professorNome} ${aluno1Nome}`.toLowerCase();
     return searchString.includes(searchTerm.toLowerCase());
   });
 
@@ -398,7 +392,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                 <TableHead>Horário</TableHead>
                 <TableHead>Professor</TableHead>
                 <TableHead>Alunos</TableHead>
-                <TableHead>Disciplina</TableHead>
                 <TableHead>Sala</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -419,7 +412,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                       <>, {aula.alunos_aulas_aluno2_idToalunos.nome} {aula.alunos_aulas_aluno2_idToalunos.sobrenome}</>
                     )}
                   </TableCell>
-                  <TableCell>{aula.disciplina}</TableCell>
                   <TableCell>{aula.sala || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -461,7 +453,7 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                 <Select
                   value={formData.professor_id}
                   onValueChange={(value) => {
-                    setFormData({ ...formData, professor_id: value, disciplina: '' });
+                    setFormData({ ...formData, professor_id: value });
                     const prof = professores.find(p => p.id === value);
                     setSelectedProfessor(prof || null);
                   }}
@@ -473,28 +465,6 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                     {professores.map((prof) => (
                       <SelectItem key={prof.id} value={prof.id}>
                         {prof.nome} {prof.sobrenome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Disciplina *</Label>
-                <Select
-                  value={formData.disciplina}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, disciplina: value })
-                  }
-                  disabled={!selectedProfessor}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a disciplina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedProfessor?.disciplinas.map((disc, idx) => (
-                      <SelectItem key={idx} value={disc}>
-                        {disc}
                       </SelectItem>
                     ))}
                   </SelectContent>

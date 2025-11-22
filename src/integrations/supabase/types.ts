@@ -107,7 +107,6 @@ export type Database = {
           aluno2_id: string | null
           created_at: string
           data: string
-          disciplina: string
           horario: string
           id: string
           observacoes: string | null
@@ -123,7 +122,6 @@ export type Database = {
           aluno2_id?: string | null
           created_at?: string
           data: string
-          disciplina: string
           horario: string
           id?: string
           observacoes?: string | null
@@ -139,7 +137,6 @@ export type Database = {
           aluno2_id?: string | null
           created_at?: string
           data?: string
-          disciplina?: string
           horario?: string
           id?: string
           observacoes?: string | null
@@ -181,7 +178,6 @@ export type Database = {
           cpf: string
           created_at: string
           data_nascimento: string
-          disciplinas: string[]
           email: string
           endereco: string | null
           id: string
@@ -195,7 +191,6 @@ export type Database = {
           cpf: string
           created_at?: string
           data_nascimento: string
-          disciplinas: string[]
           email: string
           endereco?: string | null
           id?: string
@@ -209,7 +204,6 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_nascimento?: string
-          disciplinas?: string[]
           email?: string
           endereco?: string | null
           id?: string

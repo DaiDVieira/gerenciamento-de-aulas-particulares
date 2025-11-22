@@ -34,7 +34,6 @@ interface Professor {
   email: string;
   celular: string;
   endereco: string;
-  disciplinas: string[];
   ativo: boolean;
 }
 
@@ -55,7 +54,6 @@ const Professores = () => {
     email: '',
     celular: '',
     endereco: '',
-    disciplinas: '',
   });
 
   useEffect(() => {
@@ -89,32 +87,17 @@ const Professores = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const disciplinasArray = formData.disciplinas
-      .split(',')
-      .map((d) => d.trim())
-      .filter((d) => d);
-
-    if (disciplinasArray.length === 0) {
-      toast.error('Informe pelo menos uma disciplina');
-      return;
-    }
-
-    const dataToSave = {
-      ...formData,
-      disciplinas: disciplinasArray,
-    };
-
     try {
       if (editingProfessor) {
         const { error } = await supabase
           .from('professores')
-          .update(dataToSave)
+          .update(formData)
           .eq('id', editingProfessor.id);
 
         if (error) throw error;
         toast.success('Professor atualizado com sucesso');
       } else {
-        const { error } = await supabase.from('professores').insert([dataToSave]);
+        const { error } = await supabase.from('professores').insert([formData]);
 
         if (error) throw error;
         toast.success('Professor cadastrado com sucesso');
@@ -147,7 +130,6 @@ const Professores = () => {
       email: professor.email,
       celular: professor.celular,
       endereco: professor.endereco || '',
-      disciplinas: professor.disciplinas.join(', '),
     });
     setIsDialogOpen(true);
   };
@@ -193,7 +175,6 @@ const Professores = () => {
       email: '',
       celular: '',
       endereco: '',
-      disciplinas: '',
     });
     setEditingProfessor(null);
   };
@@ -249,7 +230,6 @@ const Professores = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>CPF</TableHead>
-                <TableHead>Disciplinas</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -262,15 +242,6 @@ const Professores = () => {
                   </TableCell>
                   <TableCell>{professor.email}</TableCell>
                   <TableCell>{professor.cpf}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {professor.disciplinas.map((disc, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {disc}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
@@ -407,19 +378,6 @@ const Professores = () => {
                     required
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="disciplinas">Disciplinas * (separadas por vírgula)</Label>
-                <Input
-                  id="disciplinas"
-                  placeholder="Ex: Matemática, Física, Química"
-                  value={formData.disciplinas}
-                  onChange={(e) =>
-                    setFormData({ ...formData, disciplinas: e.target.value })
-                  }
-                  required
-                />
               </div>
 
               <div>
