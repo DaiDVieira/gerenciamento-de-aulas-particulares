@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
+import Setup from "./pages/Setup";
 import Gerenciamento from "./pages/Gerenciamento";
 import EntityOptions from "./pages/EntityOptions";
 import Alunos from "./pages/Alunos";
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/setup" element={<Setup />} />
             <Route path="/gerenciamento" element={<ProtectedRoute><Gerenciamento /></ProtectedRoute>} />
             <Route path="/options/:entity" element={<ProtectedRoute><EntityOptions /></ProtectedRoute>} />
             <Route path="/alunos" element={<ProtectedRoute><Alunos /></ProtectedRoute>} />
