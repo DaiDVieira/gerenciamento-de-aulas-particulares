@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,9 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
@@ -28,46 +25,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // =============================================================
+  // 🔥 LOGIN PERSONALIZADO
+  // =============================================================
   const signIn = async (email: string, password: string) => {
     setLoading(true);
 
     try {
-      // Login via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // =========================================================
+      // 1) LOGIN DO ADMINISTRADOR BASE (ignora Supabase)
+      // =========================================================
+      if (email === "admin@sistema.com" && password === "Admin@123") {
+        const baseUser = {
+          id: "admin-base-local",
+          email: "admin@sistema.com",
+          is_base: true
+        };
+
+        setUser(baseUser);
+        setSession({ user: baseUser });
+        toast.success("Administrador base autenticado");
+        navigate("/Gerenciamento");
+        return;
+      }
+
+      // =========================================================
+      // 2) LOGIN DE QUALQUER OUTRO USUÁRIO DO SUPABASE AUTH
+      // =========================================================
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (authError) {
-        toast.error("Credenciais inválidas");
+      if (error || !data?.user) {
+        toast.error("E-mail ou senha inválidos");
         return;
       }
 
-      const signedUser = authData.user;
-
-      // Validar se o usuário é admin na tabela administradores
-      const { data: adminData, error: adminError } = await supabase
-        .from("administradores")
-        .select("*")
-        .eq("user_id", signedUser.id)
-        .eq("ativo", true)
-        .maybeSingle();
-
-      if (!adminData || adminError) {
-        toast.error("Usuário não é administrador ativo");
-        await supabase.auth.signOut();
-        return;
-      }
-
-      // Login OK
-      setUser(signedUser);
-      setSession(authData.session);
+      // Neste sistema: NÃO verificar se é administrador
+      setUser(data.user);
+      setSession(data.session);
 
       toast.success("Login realizado com sucesso");
-      navigate("/gerenciamento");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao tentar login");
+      navigate("/Gerenciamento");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao realizar login");
     } finally {
       setLoading(false);
     }
