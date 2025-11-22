@@ -29,8 +29,6 @@ import {
 interface Administrador {
   id: string;
   user_id: string;
-  nome: string;
-  sobrenome: string;
   celular: string;
   email: string;
   ativo: boolean;
@@ -50,8 +48,6 @@ const Administradores = () => {
   const [selectedAdmin, setSelectedAdmin] = useState<Administrador | null>(null);
   const [action, setAction] = useState<string>('');
   const [formData, setFormData] = useState({
-    nome: '',
-    sobrenome: '',
     celular: '',
     email: '',
     senha: '',
@@ -79,7 +75,7 @@ const Administradores = () => {
     const { data, error } = await supabase
       .from('administradores')
       .select('*')
-      .order('nome');
+      .order('email');
 
     if (error) {
       toast.error('Erro ao carregar administradores');
@@ -118,8 +114,6 @@ const Administradores = () => {
         const { error } = await supabase
           .from('administradores')
           .update({
-            nome: formData.nome,
-            sobrenome: formData.sobrenome,
             celular: formData.celular,
             email: formData.email,
           })
@@ -149,8 +143,6 @@ const Administradores = () => {
           .insert([
             {
               user_id: authData.user.id,
-              nome: formData.nome,
-              sobrenome: formData.sobrenome,
               celular: formData.celular,
               email: formData.email,
               ativo: true,
@@ -191,8 +183,6 @@ const Administradores = () => {
   const handleEdit = (admin: Administrador) => {
     setEditingAdmin(admin);
     setFormData({
-      nome: admin.nome,
-      sobrenome: admin.sobrenome,
       celular: admin.celular,
       email: admin.email,
       senha: '',
@@ -245,8 +235,6 @@ const Administradores = () => {
 
   const resetForm = () => {
     setFormData({
-      nome: '',
-      sobrenome: '',
       celular: '',
       email: '',
       senha: '',
@@ -255,7 +243,7 @@ const Administradores = () => {
   };
 
   const filteredAdmins = administradores.filter((admin) =>
-    `${admin.nome} ${admin.sobrenome} ${admin.email}`
+    admin.email
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
@@ -302,7 +290,6 @@ const Administradores = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Celular</TableHead>
                 <TableHead>Status</TableHead>
@@ -316,12 +303,11 @@ const Administradores = () => {
                   className={action && action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
                 >
                   <TableCell className="font-medium">
-                    {admin.nome} {admin.sobrenome}
+                    {admin.email}
                     {admin.is_base_admin && (
                       <span className="ml-2 text-xs text-muted-foreground">(Base)</span>
                     )}
                   </TableCell>
-                  <TableCell>{admin.email}</TableCell>
                   <TableCell>{admin.celular}</TableCell>
                   <TableCell>
                     <span
@@ -348,31 +334,6 @@ const Administradores = () => {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="nome">Nome *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nome: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sobrenome">Sobrenome *</Label>
-                  <Input
-                    id="sobrenome"
-                    value={formData.sobrenome}
-                    onChange={(e) =>
-                      setFormData({ ...formData, sobrenome: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="email">Email *</Label>
                 <Input
