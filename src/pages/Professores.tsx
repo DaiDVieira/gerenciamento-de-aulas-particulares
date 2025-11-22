@@ -231,7 +231,6 @@ const Professores = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>CPF</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,37 +251,6 @@ const Professores = () => {
                     >
                       {professor.ativo ? 'Ativo' : 'Inativo'}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(professor)}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      {professor.ativo ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedProfessorId(professor.id);
-                            setInactivateDialogOpen(true);
-                          }}
-                        >
-                          <UserX size={14} />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleActivate(professor.id)}
-                        >
-                          Ativar
-                        </Button>
-                      )}
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}
