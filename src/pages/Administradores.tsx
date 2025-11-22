@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ interface Administrador {
 
 const Administradores = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [administradores, setAdministradores] = useState<Administrador[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,6 +57,16 @@ const Administradores = () => {
   useEffect(() => {
     fetchAdministradores();
   }, []);
+
+  useEffect(() => {
+    const action = (location.state as any)?.action;
+    if (action === 'register') {
+      resetForm();
+      setIsDialogOpen(true);
+      // Clear the state to prevent reopening on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchAdministradores = async () => {
     const { data, error } = await supabase
