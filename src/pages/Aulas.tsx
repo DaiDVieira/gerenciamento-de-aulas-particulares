@@ -337,6 +337,19 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
     setSelectedProfessor(null);
   };
 
+  const handleRowClick = (aula: Aula) => {
+    const action = (location.state as any)?.action;
+    if (action === 'edit') {
+      handleEdit(aula);
+    } else if (action === 'delete') {
+      setSelectedAulaId(aula.id);
+      setDeleteDialogOpen(true);
+    } else if (action === 'search') {
+      // Just view, no action
+      return;
+    }
+  };
+
   const filteredAulas = aulas.filter((aula) => {
     const professorNome = `${aula.professores.nome} ${aula.professores.sobrenome}`;
     const aluno1Nome = `${aula.alunos_aulas_aluno1_idToalunos.nome} ${aula.alunos_aulas_aluno1_idToalunos.sobrenome}`;
@@ -395,7 +408,11 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
             </TableHeader>
             <TableBody>
               {filteredAulas.map((aula) => (
-                <TableRow key={aula.id}>
+                <TableRow 
+                  key={aula.id}
+                  onClick={() => handleRowClick(aula)}
+                  className={(location.state as any)?.action && (location.state as any)?.action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
+                >
                   <TableCell>
                     {new Date(aula.data + 'T00:00:00').toLocaleDateString('pt-BR')}
                   </TableCell>

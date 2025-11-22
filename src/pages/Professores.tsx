@@ -46,6 +46,7 @@ const Professores = () => {
   const [editingProfessor, setEditingProfessor] = useState<Professor | null>(null);
   const [inactivateDialogOpen, setInactivateDialogOpen] = useState(false);
   const [selectedProfessorId, setSelectedProfessorId] = useState<string | null>(null);
+  const [action, setAction] = useState<string>('');
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -58,7 +59,11 @@ const Professores = () => {
 
   useEffect(() => {
     fetchProfessores();
-  }, []);
+    const currentAction = (location.state as any)?.action;
+    if (currentAction) {
+      setAction(currentAction);
+    }
+  }, [location]);
 
   useEffect(() => {
     const action = (location.state as any)?.action;
@@ -166,6 +171,18 @@ const Professores = () => {
     }
   };
 
+  const handleRowClick = (professor: Professor) => {
+    if (action === 'edit') {
+      handleEdit(professor);
+    } else if (action === 'inactivate') {
+      setSelectedProfessorId(professor.id);
+      setInactivateDialogOpen(true);
+    } else if (action === 'search') {
+      // Just view, no action
+      return;
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       nome: '',
@@ -235,7 +252,11 @@ const Professores = () => {
             </TableHeader>
             <TableBody>
               {filteredProfessores.map((professor) => (
-                <TableRow key={professor.id}>
+                <TableRow 
+                  key={professor.id}
+                  onClick={() => handleRowClick(professor)}
+                  className={action && action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
+                >
                   <TableCell className="font-medium">
                     {professor.nome} {professor.sobrenome}
                   </TableCell>

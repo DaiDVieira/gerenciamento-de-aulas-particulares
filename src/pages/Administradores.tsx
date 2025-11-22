@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +40,7 @@ interface Administrador {
 const Administradores = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [administradores, setAdministradores] = useState<Administrador[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -46,6 +48,7 @@ const Administradores = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Administrador | null>(null);
+  const [action, setAction] = useState<string>('');
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
@@ -56,7 +59,11 @@ const Administradores = () => {
 
   useEffect(() => {
     fetchAdministradores();
-  }, []);
+    const currentAction = (location.state as any)?.action;
+    if (currentAction) {
+      setAction(currentAction);
+    }
+  }, [location]);
 
   useEffect(() => {
     const action = (location.state as any)?.action;
@@ -211,6 +218,22 @@ const Administradores = () => {
     setSelectedAdmin(null);
   };
 
+  const handleRowClick = (admin: Administrador) => {
+    if (action === 'edit') {
+      // Only allow editing own information
+      if (user?.id === admin.user_id || (user?.id === 'admin-base' && admin.is_base_admin)) {
+        handleEdit(admin);
+      } else {
+        toast.error('Você só pode editar suas próprias informações');
+      }
+    } else if (action === 'delete') {
+      handleDeleteClick(admin);
+    } else if (action === 'search') {
+      // Just view, no action
+      return;
+    }
+  };
+
   const handleDeleteClick = (admin: Administrador) => {
     if (admin.is_base_admin) {
       setErrorDialogOpen(true);
@@ -287,7 +310,11 @@ const Administradores = () => {
             </TableHeader>
             <TableBody>
               {filteredAdmins.map((admin) => (
-                <TableRow key={admin.id}>
+                <TableRow 
+                  key={admin.id}
+                  onClick={() => handleRowClick(admin)}
+                  className={action && action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
+                >
                   <TableCell className="font-medium">
                     {admin.nome} {admin.sobrenome}
                     {admin.is_base_admin && (
