@@ -96,12 +96,10 @@ const Aulas = () => {
   useEffect(() => {
     const action = (location.state as any)?.action;
     if (action === 'register') {
-      resetForm();
-      setIsDialogOpen(true);
-      // Clear the state to prevent reopening on subsequent renders
+      navigate('/aulas/cadastro');
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, navigate]);
 
   const fetchAulas = async () => {
     const { data, error } = await supabase
