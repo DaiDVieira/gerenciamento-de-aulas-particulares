@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Gerenciamento from "./pages/Gerenciamento";
+import EntityOptions from "./pages/EntityOptions";
 import Alunos from "./pages/Alunos";
 import Professores from "./pages/Professores";
 import Aulas from "./pages/Aulas";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/gerenciamento" element={<ProtectedRoute><Gerenciamento /></ProtectedRoute>} />
+            <Route path="/options/:entity" element={<ProtectedRoute><EntityOptions /></ProtectedRoute>} />
             <Route path="/alunos" element={<ProtectedRoute><Alunos /></ProtectedRoute>} />
             <Route path="/professores" element={<ProtectedRoute><Professores /></ProtectedRoute>} />
             <Route path="/aulas" element={<ProtectedRoute><Aulas /></ProtectedRoute>} />
