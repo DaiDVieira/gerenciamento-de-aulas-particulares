@@ -22,9 +22,7 @@ export type Database = {
           email: string
           id: string
           is_base_admin: boolean
-          nome: string
           senha: string | null
-          sobrenome: string
           updated_at: string
           user_id: string
         }
@@ -35,9 +33,7 @@ export type Database = {
           email: string
           id?: string
           is_base_admin?: boolean
-          nome: string
           senha?: string | null
-          sobrenome: string
           updated_at?: string
           user_id: string
         }
@@ -48,9 +44,7 @@ export type Database = {
           email?: string
           id?: string
           is_base_admin?: boolean
-          nome?: string
           senha?: string | null
-          sobrenome?: string
           updated_at?: string
           user_id?: string
         }

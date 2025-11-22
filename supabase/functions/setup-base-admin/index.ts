@@ -40,25 +40,26 @@ Deno.serve(async (req) => {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: 'admin@sistema.com',
       password: 'Admin@123',
-      email_confirm: true,
-      user_metadata: {
-        nome: 'Administrador',
-        sobrenome: 'Base'
-      }
+      email_confirm: true
     })
 
     if (authError) {
       throw authError
     }
 
-    // Update the administradores table with the correct user_id
-    const { error: updateError } = await supabaseAdmin
+    // Insert into administradores table
+    const { error: insertError } = await supabaseAdmin
       .from('administradores')
-      .update({ user_id: authData.user.id })
-      .eq('email', 'admin@sistema.com')
+      .insert({
+        user_id: authData.user.id,
+        email: 'admin@sistema.com',
+        celular: '(00) 00000-0000',
+        ativo: true,
+        is_base_admin: true
+      })
 
-    if (updateError) {
-      throw updateError
+    if (insertError) {
+      throw insertError
     }
 
     return new Response(
