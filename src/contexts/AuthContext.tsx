@@ -28,32 +28,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // 🔥 LOGIN PERSONALIZADO
   const signIn = async (email: string, password: string) => {
     setLoading(true);
 
     try {
-      // ===========================================================
-      // 1) PERMITIR O ADMIN BASE (login local, sem usar Supabase)
-      // ===========================================================
-      if (email === "admin@sistema.com" && password === "Admin@123") {
-        const baseAdmin = {
-          id: "admin-base",
-          email: "admin@sistema.com",
-          is_base: true
-        };
-
-        setUser(baseAdmin);
-        setSession({ user: baseAdmin });
-
-        toast.success("Administrador base autenticado");
-        navigate("/gerenciamento");
-        return;
-      }
-
-      // ===========================================================
-      // 2) LOGIN DE QUALQUER OUTRO ADMIN (via Supabase Auth)
-      // ===========================================================
+      // Login via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -66,9 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const signedUser = authData.user;
 
-      // ===========================================================
-      // 3) VALIDAR SE O USUÁRIO É ADMIN NA TABELA administradores
-      // ===========================================================
+      // Validar se o usuário é admin na tabela administradores
       const { data: adminData, error: adminError } = await supabase
         .from("administradores")
         .select("*")
@@ -78,12 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!adminData || adminError) {
         toast.error("Usuário não é administrador ativo");
+        await supabase.auth.signOut();
         return;
       }
 
-      // ===========================================================
-      // 4) LOGIN OK
-      // ===========================================================
+      // Login OK
       setUser(signedUser);
       setSession(authData.session);
 
