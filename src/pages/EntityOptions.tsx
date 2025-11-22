@@ -38,45 +38,38 @@ const EntityOptions = () => {
         </Button>
 
         <Card className="p-12 border border-border rounded-3xl">
-          <div className="flex items-center gap-8">
-            <div className="flex gap-6 flex-1 justify-center">
+          <div className="flex flex-col items-center gap-8">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground text-center">
+                O que você quer fazer com o *{config.singular}*?
+              </h1>
+            </div>
+            
+            <div className="flex gap-6 justify-center">
               <Button
                 onClick={() => handleAction('inactivate')}
-                className="h-64 w-32 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium writing-mode-vertical"
-                style={{ writingMode: 'vertical-rl' }}
+                className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Inativar
               </Button>
               <Button
                 onClick={() => handleAction('edit')}
-                className="h-64 w-32 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium writing-mode-vertical"
-                style={{ writingMode: 'vertical-rl' }}
+                className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Editar
               </Button>
               <Button
                 onClick={() => handleAction('search')}
-                className="h-64 w-32 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium writing-mode-vertical"
-                style={{ writingMode: 'vertical-rl' }}
+                className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Pesquisar
               </Button>
               <Button
                 onClick={() => handleAction('register')}
-                className="h-64 w-32 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium writing-mode-vertical"
-                style={{ writingMode: 'vertical-rl' }}
+                className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Cadastrar
               </Button>
-            </div>
-            
-            <div className="writing-mode-vertical text-right">
-              <h1 
-                className="text-4xl font-bold text-foreground"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
-                O que você quer fazer com o *{config.singular}*?
-              </h1>
             </div>
           </div>
         </Card>
