@@ -156,7 +156,10 @@ const Aulas = () => {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleRowClick(aula)}
                 >
-                  <TableCell>{new Date(aula.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{(() => {
+                    const [y, m, d] = aula.data.split("-").map(Number);
+                    return new Date(y, m - 1, d).toLocaleDateString("pt-BR");
+                  })()}</TableCell>
                   <TableCell>{aula.horario}</TableCell>
                   <TableCell>
                     {aula.professores.nome} {aula.professores.sobrenome}

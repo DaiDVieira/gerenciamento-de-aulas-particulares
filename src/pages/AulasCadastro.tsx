@@ -79,7 +79,8 @@ const AulasCadastro = () => {
     });
 
     if (editingAula.data) {
-      setDate(new Date(editingAula.data));
+      const [year, month, day] = editingAula.data.split("-").map(Number);
+      setDate(new Date(year, month - 1, day));
     }
   }, [editingAula]);
 
