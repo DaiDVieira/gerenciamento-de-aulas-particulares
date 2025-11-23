@@ -8,9 +8,10 @@ import { Card } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { ArrowUp, CalendarIcon, X } from 'lucide-react';
+import { CalendarIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
 import {
   Select,
   SelectContent,
@@ -49,10 +50,13 @@ const AulasCadastro = () => {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [selectedAlunos, setSelectedAlunos] = useState<Aluno[]>([]);
   const [date, setDate] = useState<Date>();
+
   const [formData, setFormData] = useState({
     professor_id: '',
     horario: '',
     sala: '',
+    valor_aula: '',
+    pagamento_confirmado: false,
   });
 
   useEffect(() => {
@@ -61,23 +65,23 @@ const AulasCadastro = () => {
   }, []);
 
   const fetchProfessores = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('professores')
       .select('*')
       .eq('ativo', true)
       .order('nome');
 
-    if (!error && data) setProfessores(data);
+    if (data) setProfessores(data);
   };
 
   const fetchAlunos = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('alunos')
       .select('*')
       .eq('ativo', true)
       .order('nome');
 
-    if (!error && data) setAlunos(data);
+    if (data) setAlunos(data);
   };
 
   const handleAddAluno = (alunoId: string) => {
@@ -86,9 +90,7 @@ const AulasCadastro = () => {
       return;
     }
     const aluno = alunos.find(a => a.id === alunoId);
-    if (aluno) {
-      setSelectedAlunos([...selectedAlunos, aluno]);
-    }
+    if (aluno) setSelectedAlunos([...selectedAlunos, aluno]);
   };
 
   const handleRemoveAluno = (alunoId: string) => {
@@ -128,7 +130,7 @@ const AulasCadastro = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.professor_id || !date || !formData.horario || selectedAlunos.length === 0) {
+    if (!formData.professor_id || !date || !formData.horario || selectedAlunos.length === 0 || !formData.valor_aula) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -147,10 +149,6 @@ const AulasCadastro = () => {
 
     if (!canProceed) return;
 
-    const numAlunos = selectedAlunos.length;
-    const valorAula = numAlunos === 1 ? 80 : 120;
-    const valorProfessor = numAlunos === 1 ? 40 : 60;
-
     const dataToSave = {
       professor_id: formData.professor_id,
       aluno1_id: aluno1Id,
@@ -159,13 +157,16 @@ const AulasCadastro = () => {
       horario: formData.horario,
       sala: formData.sala || null,
       observacoes: null,
-      valor_aula: valorAula,
-      valor_professor: valorProfessor
+      valor_aula: Number(formData.valor_aula),
+      valor_professor: null,
+      pagamento_confirmado: formData.pagamento_confirmado,
     };
 
     const { error } = await supabase.from("aulas").insert([dataToSave]);
+
     if (error) {
       toast.error("Erro ao cadastrar aula");
+      console.error(error);
       return;
     }
 
@@ -173,9 +174,6 @@ const AulasCadastro = () => {
     setIsDialogOpen(false);
     navigate("/aulas");
   };
-
-  const valorAula =
-    selectedAlunos.length === 1 ? 80 : selectedAlunos.length === 2 ? 120 : 0;
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -186,21 +184,17 @@ const AulasCadastro = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Date + Time */}
+          {/* Data + Horário */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-lg">Selecione a data</Label>
+              <Label>Selecione a data</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left h-12 rounded-xl"
-                  >
+                  <Button variant="outline" className="w-full h-12 justify-start">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
+                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
                   </Button>
                 </PopoverTrigger>
-
                 <PopoverContent align="start" className="p-0">
                   <Calendar
                     mode="single"
@@ -214,29 +208,26 @@ const AulasCadastro = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="horario" className="text-lg">Horário</Label>
+              <Label>Horário *</Label>
               <Input
-                id="horario"
                 type="time"
                 value={formData.horario}
-                onChange={(e) =>
-                  setFormData({ ...formData, horario: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, horario: e.target.value })}
                 required
-                className="h-12 rounded-xl"
+                className="h-12"
               />
             </div>
           </div>
 
           {/* Professor */}
           <div className="space-y-2">
-            <Label className="text-lg">Selecione o professor</Label>
+            <Label>Professor *</Label>
             <Select
               value={formData.professor_id}
               onValueChange={(v) => setFormData({ ...formData, professor_id: v })}
             >
-              <SelectTrigger className="h-12 rounded-xl">
-                <SelectValue placeholder="Selecione uma opção" />
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
                 {professores.map((p) => (
@@ -250,28 +241,25 @@ const AulasCadastro = () => {
 
           {/* Sala */}
           <div className="space-y-2">
-            <Label className="text-lg">Sala</Label>
+            <Label>Sala</Label>
             <Input
-              id="sala"
               value={formData.sala}
-              onChange={(e) =>
-                setFormData({ ...formData, sala: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, sala: e.target.value })}
               placeholder="Número da sala"
-              className="h-12 rounded-xl"
+              className="h-12"
             />
           </div>
 
-          {/* Alunos */}
+          {/* Selecionar aluno */}
           <div className="space-y-2">
-            <Label className="text-lg">Selecionar aluno</Label>
+            <Label>Selecionar aluno *</Label>
             <Select onValueChange={handleAddAluno}>
-              <SelectTrigger className="h-12 rounded-xl">
+              <SelectTrigger className="h-12">
                 <SelectValue placeholder="Selecione um aluno" />
               </SelectTrigger>
               <SelectContent>
                 {alunos
-                  .filter((a) => !selectedAlunos.find((s) => s.id === a.id))
+                  .filter(a => !selectedAlunos.some(s => s.id === a.id))
                   .map((aluno) => (
                     <SelectItem key={aluno.id} value={aluno.id}>
                       {aluno.nome} {aluno.sobrenome}
@@ -281,25 +269,14 @@ const AulasCadastro = () => {
             </Select>
           </div>
 
-          {/* Alunos selecionados */}
+          {/* Lista de alunos */}
           {selectedAlunos.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-lg">Alunos selecionados</Label>
-
+              <Label>Alunos selecionados</Label>
               {selectedAlunos.map((aluno) => (
-                <Card
-                  key={aluno.id}
-                  className="p-4 flex items-center justify-between"
-                >
-                  <div>
-                    <p className="font-medium">{aluno.nome} {aluno.sobrenome}</p>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveAluno(aluno.id)}
-                  >
+                <Card key={aluno.id} className="p-4 flex justify-between items-center">
+                  <strong>{aluno.nome} {aluno.sobrenome}</strong>
+                  <Button variant="ghost" size="sm" onClick={() => handleRemoveAluno(aluno.id)}>
                     <X size={18} />
                   </Button>
                 </Card>
@@ -308,18 +285,31 @@ const AulasCadastro = () => {
           )}
 
           {/* Valor da aula */}
-          {valorAula > 0 && (
-            <div className="space-y-2">
-              <Label className="text-lg">Valor da aula</Label>
-              <div className="p-4 bg-muted rounded-xl">
-                <p className="text-2xl font-bold">R$ {valorAula},00</p>
-              </div>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Valor da aula *</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={formData.valor_aula}
+              onChange={(e) => setFormData({ ...formData, valor_aula: e.target.value })}
+              required
+            />
+          </div>
 
-          {/* Footer Buttons */}
+          {/* Checkbox Pagamento */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={formData.pagamento_confirmado}
+              onChange={(e) =>
+                setFormData({ ...formData, pagamento_confirmado: e.target.checked })
+              }
+            />
+            <Label>Pagamento confirmado</Label>
+          </div>
+
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => navigate("/aulas")}>
+            <Button variant="outline" onClick={() => navigate("/aulas")}>
               Cancelar
             </Button>
             <Button type="submit">Cadastrar Aula</Button>

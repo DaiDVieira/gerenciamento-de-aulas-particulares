@@ -1,27 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { ArrowLeft, Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { ArrowLeft, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -29,7 +28,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog";
 
 interface Aula {
   id: string;
@@ -39,9 +39,9 @@ interface Aula {
   data: string;
   horario: string;
   sala: string | null;
-  status: string;
   valor_aula: number | null;
   valor_professor: number | null;
+  pagamento_confirmado: boolean;
   observacoes: string | null;
   professores: { nome: string; sobrenome: string };
   alunos_aulas_aluno1_idToalunos: { nome: string; sobrenome: string };
@@ -53,8 +53,6 @@ interface Professor {
   nome: string;
   sobrenome: string;
   ativo: boolean;
-  celular: string;
-  email: string;
 }
 
 interface Aluno {
@@ -62,29 +60,32 @@ interface Aluno {
   nome: string;
   sobrenome: string;
   ativo: boolean;
-  email: string;
 }
 
 const Aulas = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [aulas, setAulas] = useState<Aula[]>([]);
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAula, setEditingAula] = useState<Aula | null>(null);
-  const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAulaId, setSelectedAulaId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
-    professor_id: '',
-    aluno1_id: '',
-    aluno2_id: '',
-    data: '',
-    horario: '',
-    sala: '',
-    observacoes: '',
+    professor_id: "",
+    aluno1_id: "",
+    aluno2_id: "",
+    data: "",
+    horario: "",
+    sala: "",
+    valor_aula: "",
+    pagamento_confirmado: false,
+    observacoes: "",
   });
 
   useEffect(() => {
@@ -95,26 +96,26 @@ const Aulas = () => {
 
   useEffect(() => {
     const action = (location.state as any)?.action;
-    if (action === 'register') {
-      navigate('/aulas/cadastro');
+    if (action === "register") {
+      navigate("/aulas/cadastro");
       window.history.replaceState({}, document.title);
     }
   }, [location, navigate]);
 
   const fetchAulas = async () => {
     const { data, error } = await supabase
-      .from('aulas')
+      .from("aulas")
       .select(`
         *,
         professores!aulas_professor_id_fkey (nome, sobrenome),
         alunos_aulas_aluno1_idToalunos:alunos!aulas_aluno1_id_fkey (nome, sobrenome),
         alunos_aulas_aluno2_idToalunos:alunos!aulas_aluno2_id_fkey (nome, sobrenome)
       `)
-      .order('data', { ascending: false })
-      .order('horario', { ascending: false });
+      .order("data", { ascending: false })
+      .order("horario", { ascending: false });
 
     if (error) {
-      toast.error('Erro ao carregar aulas');
+      toast.error("Erro ao carregar aulas");
       console.error(error);
     } else {
       setAulas(data || []);
@@ -122,57 +123,51 @@ const Aulas = () => {
   };
 
   const fetchProfessores = async () => {
-    const { data, error } = await supabase
-      .from('professores')
-      .select('*')
-      .eq('ativo', true)
-      .order('nome');
+    const { data } = await supabase
+      .from("professores")
+      .select("*")
+      .eq("ativo", true)
+      .order("nome");
 
-    if (error) {
-      console.error(error);
-    } else {
-      setProfessores(data || []);
-    }
+    if (data) setProfessores(data);
   };
 
   const fetchAlunos = async () => {
-    const { data, error } = await supabase
-      .from('alunos')
-      .select('*')
-      .eq('ativo', true)
-      .order('nome');
+    const { data } = await supabase
+      .from("alunos")
+      .select("*")
+      .eq("ativo", true)
+      .order("nome");
 
-    if (error) {
-      console.error(error);
-    } else {
-      setAlunos(data || []);
-    }
+    if (data) setAlunos(data);
   };
 
-  const checkConflicts = async (data: string, horario: string, professorId: string, aluno1Id: string, aluno2Id: string, editingId?: string) => {
-    const { data: conflictingAulas, error } = await supabase
-      .from('aulas')
-      .select('*')
-      .eq('data', data)
-      .eq('horario', horario)
-      .neq('id', editingId || '');
-
-    if (error) {
-      console.error(error);
-      return false;
-    }
+  const checkConflicts = async (
+    data: string,
+    horario: string,
+    professorId: string,
+    aluno1Id: string,
+    aluno2Id: string,
+    editingId?: string
+  ) => {
+    const { data: conflictingAulas } = await supabase
+      .from("aulas")
+      .select("*")
+      .eq("data", data)
+      .eq("horario", horario)
+      .neq("id", editingId || "");
 
     for (const aula of conflictingAulas || []) {
       if (aula.professor_id === professorId) {
-        toast.error('Professor já possui aula neste horário');
+        toast.error("Professor já possui aula neste horário");
         return false;
       }
       if (aula.aluno1_id === aluno1Id || aula.aluno1_id === aluno2Id) {
-        toast.error('Aluno já possui aula neste horário');
+        toast.error("Aluno já possui aula neste horário");
         return false;
       }
       if (aula.aluno2_id && (aula.aluno2_id === aluno1Id || aula.aluno2_id === aluno2Id)) {
-        toast.error('Aluno já possui aula neste horário');
+        toast.error("Aluno já possui aula neste horário");
         return false;
       }
     }
@@ -180,59 +175,11 @@ const Aulas = () => {
     return true;
   };
 
-  const sendNotifications = async (aula: any, action: 'criacao' | 'alteracao' | 'cancelamento') => {
-    try {
-      const professor = professores.find(p => p.id === aula.professor_id);
-      const aluno1 = alunos.find(a => a.id === aula.aluno1_id);
-      const aluno2 = aula.aluno2_id ? alunos.find(a => a.id === aula.aluno2_id) : null;
-
-      const message = `
-🎓 Aula ${action === 'criacao' ? 'Agendada' : action === 'alteracao' ? 'Alterada' : 'Cancelada'}
-
-👨‍🏫 Professor: ${professor?.nome} ${professor?.sobrenome}
-👨‍🎓 Aluno(s): ${aluno1?.nome} ${aluno1?.sobrenome}${aluno2 ? `, ${aluno2.nome} ${aluno2.sobrenome}` : ''}
-📅 Data: ${new Date(aula.data + 'T00:00:00').toLocaleDateString('pt-BR')}
-⏰ Horário: ${aula.horario}
-${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
-      `.trim();
-
-      // Enviar WhatsApp
-      await supabase.functions.invoke('send-whatsapp-notification', {
-        body: { to: professor?.celular, message, type: action }
-      });
-
-      // Sincronizar Google Calendar
-      const startDateTime = `${aula.data}T${aula.horario}:00`;
-      const endTime = new Date(`${aula.data}T${aula.horario}`);
-      endTime.setHours(endTime.getHours() + 1);
-      const endDateTime = endTime.toISOString().slice(0, 16);
-
-      await supabase.functions.invoke('sync-google-calendar', {
-        body: {
-          summary: `Aula - ${professor?.nome}`,
-          description: message,
-          startDateTime,
-          endDateTime,
-          attendees: [professor?.email || '', aluno1?.email || ''],
-          action: action === 'criacao' ? 'create' : action === 'alteracao' ? 'update' : 'delete',
-          eventId: aula.id
-        }
-      });
-    } catch (error) {
-      console.error('Erro ao enviar notificações:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.professor_id || !formData.aluno1_id) {
-      toast.error('Professor e pelo menos um aluno são obrigatórios');
-      return;
-    }
-
-    if (formData.aluno2_id && formData.aluno1_id === formData.aluno2_id) {
-      toast.error('Os alunos devem ser diferentes');
+      toast.error("Professor e pelo menos um aluno são obrigatórios");
       return;
     }
 
@@ -247,58 +194,49 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
 
     if (!canProceed) return;
 
-    const numAlunos = formData.aluno2_id ? 2 : 1;
-    const valorAula = numAlunos === 1 ? 80 : 120;
-    const valorProfessor = numAlunos === 1 ? 40 : 60;
-
     const dataToSave = {
       ...formData,
       aluno2_id: formData.aluno2_id || null,
-      sala: formData.sala || null,
-      observacoes: formData.observacoes || null,
-      valor_aula: valorAula,
-      valor_professor: valorProfessor,
+      valor_aula: Number(formData.valor_aula),
+      valor_professor: null,
     };
 
     try {
       if (editingAula) {
         const { error } = await supabase
-          .from('aulas')
+          .from("aulas")
           .update(dataToSave)
-          .eq('id', editingAula.id);
+          .eq("id", editingAula.id);
 
         if (error) throw error;
-        await sendNotifications({ ...dataToSave, id: editingAula.id }, 'alteracao');
-        toast.success('Aula atualizada com sucesso');
+
+        toast.success("Aula atualizada com sucesso");
       } else {
-        const { data: newAula, error } = await supabase.from('aulas').insert([dataToSave]).select().single();
-
-        if (error) throw error;
-        await sendNotifications(newAula, 'criacao');
-        toast.success('Aula agendada com sucesso');
+        await supabase.from("aulas").insert([dataToSave]);
+        toast.success("Aula cadastrada com sucesso");
       }
 
       setIsDialogOpen(false);
       resetForm();
       fetchAulas();
-    } catch (error: any) {
-      toast.error('Erro ao salvar aula');
+    } catch (error) {
+      toast.error("Erro ao salvar aula");
       console.error(error);
     }
   };
 
   const handleEdit = (aula: Aula) => {
     setEditingAula(aula);
-    const professor = professores.find(p => p.id === aula.professor_id);
-    setSelectedProfessor(professor || null);
     setFormData({
       professor_id: aula.professor_id,
       aluno1_id: aula.aluno1_id,
-      aluno2_id: aula.aluno2_id || '',
+      aluno2_id: aula.aluno2_id || "",
       data: aula.data,
       horario: aula.horario,
-      sala: aula.sala || '',
-      observacoes: aula.observacoes || '',
+      sala: aula.sala || "",
+      valor_aula: aula.valor_aula?.toString() || "",
+      pagamento_confirmado: aula.pagamento_confirmado,
+      observacoes: aula.observacoes || "",
     });
     setIsDialogOpen(true);
   };
@@ -306,84 +244,63 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
   const handleDelete = async () => {
     if (!selectedAulaId) return;
 
-    const aula = aulas.find(a => a.id === selectedAulaId);
-    const { error } = await supabase.from('aulas').delete().eq('id', selectedAulaId);
+    const { error } = await supabase.from("aulas").delete().eq("id", selectedAulaId);
 
     if (error) {
-      toast.error('Erro ao excluir aula');
-      console.error(error);
+      toast.error("Erro ao excluir aula");
     } else {
-      if (aula) {
-        // Notify teacher and guardians (simulated)
-        console.log('Notificação de cancelamento enviada');
-      }
-      toast.success('Aula excluída com sucesso');
+      toast.success("Aula excluída com sucesso");
       fetchAulas();
     }
+
     setSelectedAulaId(null);
   };
 
   const resetForm = () => {
     setFormData({
-      professor_id: '',
-      aluno1_id: '',
-      aluno2_id: '',
-      data: '',
-      horario: '',
-      sala: '',
-      observacoes: '',
+      professor_id: "",
+      aluno1_id: "",
+      aluno2_id: "",
+      data: "",
+      horario: "",
+      sala: "",
+      valor_aula: "",
+      pagamento_confirmado: false,
+      observacoes: "",
     });
     setEditingAula(null);
-    setSelectedProfessor(null);
   };
 
   const handleRowClick = (aula: Aula) => {
     const action = (location.state as any)?.action;
-    if (action === 'edit') {
+    if (action === "edit") {
       handleEdit(aula);
-    } else if (action === 'delete') {
+    } else if (action === "delete") {
       setSelectedAulaId(aula.id);
       setDeleteDialogOpen(true);
-    } else if (action === 'search') {
-      // Just view, no action
-      return;
     }
   };
-
-  const filteredAulas = aulas.filter((aula) => {
-    const professorNome = `${aula.professores.nome} ${aula.professores.sobrenome}`;
-    const aluno1Nome = `${aula.alunos_aulas_aluno1_idToalunos.nome} ${aula.alunos_aulas_aluno1_idToalunos.sobrenome}`;
-    const searchString = `${professorNome} ${aluno1Nome}`.toLowerCase();
-    return searchString.includes(searchTerm.toLowerCase());
-  });
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/gerenciamento')}
-            >
-              <ArrowLeft size={16} />
-            </Button>
-            <h1 className="text-3xl font-bold text-foreground">Aulas</h1>
-          </div>
+
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" onClick={() => navigate("/gerenciamento")}>
+            <ArrowLeft size={18} />
+          </Button>
+          <h1 className="text-3xl font-bold">Aulas</h1>
         </div>
 
-        <Card className="p-6">
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                placeholder="Buscar aula..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <Card className="p-6 mb-6">
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+            <Input
+              placeholder="Buscar aula..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
           <Table>
@@ -397,57 +314,62 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAulas.map((aula) => (
-                <TableRow 
-                  key={aula.id}
-                  onClick={() => handleRowClick(aula)}
-                  className={(location.state as any)?.action && (location.state as any)?.action !== 'register' ? 'cursor-pointer hover:bg-muted/50' : ''}
-                >
-                  <TableCell>
-                    {new Date(aula.data + 'T00:00:00').toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell>{aula.horario}</TableCell>
-                  <TableCell>
-                    {aula.professores.nome} {aula.professores.sobrenome}
-                  </TableCell>
-                  <TableCell>
-                    {aula.alunos_aulas_aluno1_idToalunos.nome} {aula.alunos_aulas_aluno1_idToalunos.sobrenome}
-                    {aula.alunos_aulas_aluno2_idToalunos && (
-                      <>, {aula.alunos_aulas_aluno2_idToalunos.nome} {aula.alunos_aulas_aluno2_idToalunos.sobrenome}</>
-                    )}
-                  </TableCell>
-                  <TableCell>{aula.sala || '-'}</TableCell>
-                </TableRow>
-              ))}
+              {aulas
+                .filter((aula) =>
+                  `${aula.professores.nome} ${aula.professores.sobrenome}`
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                )
+                .map((aula) => (
+                  <TableRow
+                    key={aula.id}
+                    onClick={() => handleRowClick(aula)}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
+                    <TableCell>
+                      {new Date(aula.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell>{aula.horario}</TableCell>
+                    <TableCell>
+                      {aula.professores.nome} {aula.professores.sobrenome}
+                    </TableCell>
+                    <TableCell>
+                      {aula.alunos_aulas_aluno1_idToalunos.nome}{" "}
+                      {aula.alunos_aulas_aluno1_idToalunos.sobrenome}
+                      {aula.alunos_aulas_aluno2_idToalunos && (
+                        <>
+                          , {aula.alunos_aulas_aluno2_idToalunos.nome}{" "}
+                          {aula.alunos_aulas_aluno2_idToalunos.sobrenome}
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell>{aula.sala || "-"}</TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </Card>
 
+        {/* Modal de cadastro/edição */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingAula ? 'Editar Aula' : 'Agendar Aula'}
-              </DialogTitle>
+              <DialogTitle>{editingAula ? "Editar Aula" : "Cadastrar Aula"}</DialogTitle>
             </DialogHeader>
+
             <form onSubmit={handleSubmit} className="space-y-4">
+
               <div>
                 <Label>Professor *</Label>
                 <Select
                   value={formData.professor_id}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, professor_id: value });
-                    const prof = professores.find(p => p.id === value);
-                    setSelectedProfessor(prof || null);
-                  }}
+                  onValueChange={(v) => setFormData({ ...formData, professor_id: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o professor" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {professores.map((prof) => (
-                      <SelectItem key={prof.id} value={prof.id}>
-                        {prof.nome} {prof.sobrenome}
+                    {professores.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome} {p.sobrenome}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -459,17 +381,13 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                   <Label>Aluno 1 *</Label>
                   <Select
                     value={formData.aluno1_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, aluno1_id: value })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, aluno1_id: v })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o aluno" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {alunos.map((aluno) => (
-                        <SelectItem key={aluno.id} value={aluno.id}>
-                          {aluno.nome} {aluno.sobrenome}
+                      {alunos.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.nome} {a.sobrenome}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -480,20 +398,16 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
                   <Label>Aluno 2 (opcional)</Label>
                   <Select
                     value={formData.aluno2_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, aluno2_id: value })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, aluno2_id: v })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o aluno" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Nenhum</SelectItem>
                       {alunos
-                        .filter(a => a.id !== formData.aluno1_id)
-                        .map((aluno) => (
-                          <SelectItem key={aluno.id} value={aluno.id}>
-                            {aluno.nome} {aluno.sobrenome}
+                        .filter((a) => a.id !== formData.aluno1_id)
+                        .map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.nome} {a.sobrenome}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -503,46 +417,56 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="data">Data *</Label>
+                  <Label>Data *</Label>
                   <Input
-                    id="data"
                     type="date"
                     value={formData.data}
-                    onChange={(e) =>
-                      setFormData({ ...formData, data: e.target.value })
-                    }
-                    required
+                    onChange={(e) => setFormData({ ...formData, data: e.target.value })}
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="horario">Horário *</Label>
+                  <Label>Horário *</Label>
                   <Input
-                    id="horario"
                     type="time"
                     value={formData.horario}
-                    onChange={(e) =>
-                      setFormData({ ...formData, horario: e.target.value })
-                    }
-                    required
+                    onChange={(e) => setFormData({ ...formData, horario: e.target.value })}
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="sala">Sala</Label>
+                <Label>Sala</Label>
                 <Input
-                  id="sala"
                   value={formData.sala}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sala: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, sala: e.target.value })}
                 />
               </div>
 
               <div>
-                <Label htmlFor="observacoes">Observações</Label>
+                <Label>Valor da aula *</Label>
                 <Input
-                  id="observacoes"
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_aula}
+                  onChange={(e) => setFormData({ ...formData, valor_aula: e.target.value })}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.pagamento_confirmado}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pagamento_confirmado: e.target.checked })
+                  }
+                />
+                <Label>Pagamento confirmado</Label>
+              </div>
+
+              <div>
+                <Label>Observações</Label>
+                <Input
                   value={formData.observacoes}
                   onChange={(e) =>
                     setFormData({ ...formData, observacoes: e.target.value })
@@ -551,19 +475,10 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
               </div>
 
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    resetForm();
-                  }}
-                >
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {editingAula ? 'Atualizar' : 'Agendar'}
-                </Button>
+                <Button type="submit">{editingAula ? "Atualizar" : "Cadastrar"}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -574,6 +489,7 @@ ${aula.sala ? `🚪 Sala: ${aula.sala}` : ''}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={handleDelete}
         />
+
       </div>
     </div>
   );

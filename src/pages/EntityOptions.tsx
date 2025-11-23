@@ -13,13 +13,17 @@ const entityConfig = {
 const EntityOptions = () => {
   const navigate = useNavigate();
   const { entity } = useParams<{ entity: string }>();
-  
+
   const config = entity ? entityConfig[entity as keyof typeof entityConfig] : null;
 
   if (!config) {
     navigate('/gerenciamento');
     return null;
   }
+
+  // Para aulas e administradores, o botão deve ser EXCLUIR.
+  // Para alunos e professores, deve ser INATIVAR.
+  const isDeleteAction = entity === "aulas" || entity === "administradores";
 
   const handleAction = (action: string) => {
     navigate(`/${entity}`, { state: { action } });
@@ -41,35 +45,40 @@ const EntityOptions = () => {
           <div className="flex flex-col items-center gap-8">
             <div>
               <h1 className="text-4xl font-bold text-foreground text-center">
-                O que você quer fazer com o *{config.singular}*?
+                O que você quer fazer com {config.singular}?
               </h1>
             </div>
-            
+
             <div className="flex gap-6 justify-center">
+
               <Button
-                onClick={() => handleAction('inactivate')}
+                onClick={() => handleAction(isDeleteAction ? 'delete' : 'inactivate')}
                 className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
-                Inativar
+                {isDeleteAction ? "Excluir" : "Inativar"}
               </Button>
+
               <Button
                 onClick={() => handleAction('edit')}
                 className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Editar
               </Button>
+
               <Button
                 onClick={() => handleAction('search')}
                 className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Pesquisar
               </Button>
+
               <Button
                 onClick={() => handleAction('register')}
                 className="w-32 h-64 bg-[#2d5f4a] hover:bg-[#2d5f4a]/90 text-white rounded-3xl text-lg font-medium"
               >
                 Cadastrar
               </Button>
+
             </div>
           </div>
         </Card>

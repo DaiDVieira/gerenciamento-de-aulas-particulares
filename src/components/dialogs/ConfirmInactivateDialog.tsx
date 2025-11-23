@@ -25,7 +25,7 @@ export const ConfirmInactivateDialog = ({
   title = "Confirmar Inatividade",
   description,
 }: ConfirmInactivateDialogProps) => {
-  const defaultDescription = `Você irá inativar esse registro do ${entityName}. Essa ação irá alterar. Inativar?`;
+  const defaultDescription = `Você irá inativar esse registro do ${entityName}. Tem certeza que deseja inativar?`;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
