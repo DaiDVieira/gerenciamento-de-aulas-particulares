@@ -9,8 +9,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { CalendarIcon, X } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NotificationDialog } from "@/components/dialogs/NotificationDialog";
 
 import {
   Select,
@@ -40,6 +41,7 @@ interface Aluno {
   nome: string;
   sobrenome: string;
   ativo: boolean;
+  celular_responsavel: string;
 }
 
 const AulasCadastro = () => {
@@ -48,6 +50,12 @@ const AulasCadastro = () => {
 
   const editingAula = (location.state as any)?.aula ?? null;
   const [isDialogOpen, setIsDialogOpen] = useState(true);
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
+  const [notificationData, setNotificationData] = useState<{
+    studentNames: string[];
+    date: string;
+    time: string;
+  }>({ studentNames: [], date: "", time: "" });
 
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -154,6 +162,15 @@ const AulasCadastro = () => {
       pagamento_confirmado: formData.pagamento_confirmado,
     };
 
+    // Verificar se a aula está a menos de 24 horas de antecedência
+    const [hours, minutes] = formData.horario.split(":").map(Number);
+    const aulaDateTime = new Date(date);
+    aulaDateTime.setHours(hours, minutes, 0, 0);
+    const now = new Date();
+    const hoursDifference = differenceInHours(aulaDateTime, now);
+
+    const shouldShowNotification = hoursDifference < 24 && hoursDifference >= 0;
+
     if (editingAula) {
       const { error } = await supabase
         .from("aulas")
@@ -165,8 +182,34 @@ const AulasCadastro = () => {
         return;
       }
 
-      toast.success("Aula atualizada!");
-      navigate("/aulas");
+      if (shouldShowNotification) {
+        // Simular envio de notificação
+        const studentNames = selectedAlunos.map(
+          (aluno) => `${aluno.nome} ${aluno.sobrenome}`
+        );
+        setNotificationData({
+          studentNames,
+          date: format(date, "dd/MM/yyyy", { locale: ptBR }),
+          time: formData.horario,
+        });
+        setIsNotificationDialogOpen(true);
+
+        // Simular chamada à edge function
+        try {
+          await supabase.functions.invoke("send-whatsapp-notification", {
+            body: {
+              to: selectedAlunos[0].celular_responsavel,
+              message: `Aula alterada para ${format(date, "dd/MM/yyyy")} às ${formData.horario}`,
+              type: "alteracao",
+            },
+          });
+        } catch (err) {
+          console.log("Simulação de notificação:", err);
+        }
+      } else {
+        toast.success("Aula atualizada!");
+        navigate("/aulas");
+      }
       return;
     }
 
@@ -177,13 +220,54 @@ const AulasCadastro = () => {
       return;
     }
 
-    toast.success("Aula cadastrada!");
-    navigate("/aulas");
+    if (shouldShowNotification) {
+      // Simular envio de notificação
+      const studentNames = selectedAlunos.map(
+        (aluno) => `${aluno.nome} ${aluno.sobrenome}`
+      );
+      setNotificationData({
+        studentNames,
+        date: format(date, "dd/MM/yyyy", { locale: ptBR }),
+        time: formData.horario,
+      });
+      setIsNotificationDialogOpen(true);
+
+      // Simular chamada à edge function
+      try {
+        await supabase.functions.invoke("send-whatsapp-notification", {
+          body: {
+            to: selectedAlunos[0].celular_responsavel,
+            message: `Aula agendada para ${format(date, "dd/MM/yyyy")} às ${formData.horario}`,
+            type: "criacao",
+          },
+        });
+      } catch (err) {
+        console.log("Simulação de notificação:", err);
+      }
+    } else {
+      toast.success("Aula cadastrada!");
+      navigate("/aulas");
+    }
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <>
+      <NotificationDialog
+        open={isNotificationDialogOpen}
+        onOpenChange={(open) => {
+          setIsNotificationDialogOpen(open);
+          if (!open) {
+            toast.success(editingAula ? "Aula atualizada!" : "Aula cadastrada!");
+            navigate("/aulas");
+          }
+        }}
+        studentNames={notificationData.studentNames}
+        date={notificationData.date}
+        time={notificationData.time}
+      />
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editingAula ? "Editar Aula" : "Cadastrar Nova Aula"}
@@ -343,6 +427,7 @@ const AulasCadastro = () => {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
