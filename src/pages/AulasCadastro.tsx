@@ -149,7 +149,7 @@ const AulasCadastro = () => {
       sala: formData.sala || null,
       observacoes: null,
       valor_aula: Number(formData.valor_aula),
-      valor_professor: 60,
+      valor_professor: Number(formData.valor_aula)*3/4,
       pagamento_confirmado: formData.pagamento_confirmado,
     };
 
