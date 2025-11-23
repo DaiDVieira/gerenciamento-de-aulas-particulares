@@ -110,6 +110,7 @@ export type Database = {
           horario: string
           id: string
           observacoes: string | null
+          pagamento_confirmado: boolean
           professor_id: string
           sala: string | null
           status: string
@@ -125,6 +126,7 @@ export type Database = {
           horario: string
           id?: string
           observacoes?: string | null
+          pagamento_confirmado?: boolean
           professor_id: string
           sala?: string | null
           status?: string
@@ -140,6 +142,7 @@ export type Database = {
           horario?: string
           id?: string
           observacoes?: string | null
+          pagamento_confirmado?: boolean
           professor_id?: string
           sala?: string | null
           status?: string
